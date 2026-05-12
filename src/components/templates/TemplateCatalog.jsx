@@ -1,0 +1,495 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import {
+  demoTemplates,
+  templateConversionTypeOptions,
+  templateSphereOptions,
+  templateToolOptions,
+} from '../../data/demoTemplates'
+import { findTemplateById } from '../../utils/templateSearchAndFilter'
+import {
+  getTemplateSuggestionsByQuery,
+  getTemplatesBySearchParams,
+} from '../../utils/mockTemplateGetApi'
+import { PromptSyntaxPreview } from '../editor/PromptSyntaxPreview'
+
+const emptyTemplateFilters = {
+  sphere: '',
+  tool: '',
+  conversionType: '',
+}
+
+function createFiltersFromSearchParams(searchParams) {
+  return {
+    sphere: searchParams.get('sphere') || '',
+    tool: searchParams.get('tool') || '',
+    conversionType: searchParams.get('conversionType') || '',
+  }
+}
+
+function createSearchParamsFromForm(query, filters) {
+  const params = new URLSearchParams()
+
+  if (query.trim()) {
+    params.set('q', query.trim())
+  }
+
+  if (filters.sphere) {
+    params.set('sphere', filters.sphere)
+  }
+
+  if (filters.tool) {
+    params.set('tool', filters.tool)
+  }
+
+  if (filters.conversionType) {
+    params.set('conversionType', filters.conversionType)
+  }
+
+  return params
+}
+
+export function TemplateCatalogPage() {
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const queryFromUrl = searchParams.get('q') || ''
+  const filtersFromUrl = useMemo(
+    () => createFiltersFromSearchParams(searchParams),
+    [searchParams],
+  )
+
+  const [searchQuery, setSearchQuery] = useState(queryFromUrl)
+  const [templateFilters, setTemplateFilters] = useState(filtersFromUrl)
+  const [templateSuggestions, setTemplateSuggestions] = useState([])
+  const [foundTemplates, setFoundTemplates] = useState([])
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false)
+  const [isResultsLoading, setIsResultsLoading] = useState(false)
+  const [searchError, setSearchError] = useState('')
+
+  const queryIsLongEnough = searchQuery.trim().length >= 3
+  const queryIsNotEmptyButTooShort = searchQuery.trim().length > 0 && !queryIsLongEnough
+  const hasAnyFilter = Boolean(
+    templateFilters.sphere || templateFilters.tool || templateFilters.conversionType,
+  )
+
+  useEffect(() => {
+    const abortController = new AbortController()
+
+    async function loadSuggestionsWithDebounce() {
+      setIsSuggestionsLoading(false)
+      setTemplateSuggestions([])
+
+      if (searchQuery.trim().length < 3) {
+        return
+      }
+
+      try {
+        setIsSuggestionsLoading(true)
+
+        const debounceTimeoutId = window.setTimeout(async () => {
+          try {
+            const suggestions = await getTemplateSuggestionsByQuery(
+              searchQuery,
+              abortController.signal,
+            )
+
+            setTemplateSuggestions(suggestions)
+          } catch (error) {
+            if (error.name !== 'AbortError') {
+              setTemplateSuggestions([])
+            }
+          } finally {
+            setIsSuggestionsLoading(false)
+          }
+        }, 450)
+
+        abortController.signal.addEventListener('abort', () => {
+          window.clearTimeout(debounceTimeoutId)
+        })
+      } catch {
+        setIsSuggestionsLoading(false)
+      }
+    }
+
+    loadSuggestionsWithDebounce()
+
+    return () => {
+      abortController.abort()
+    }
+  }, [searchQuery])
+
+  useEffect(() => {
+    const abortController = new AbortController()
+
+    async function loadResults() {
+      const currentQuery = searchParams.get('q') || ''
+      const currentFilters = createFiltersFromSearchParams(searchParams)
+      const currentQueryIsReady = currentQuery.trim().length >= 3
+      const currentHasAnyFilter = Boolean(
+        currentFilters.sphere || currentFilters.tool || currentFilters.conversionType,
+      )
+
+      setSearchError('')
+
+      if (!currentQueryIsReady && !currentHasAnyFilter) {
+        setFoundTemplates([])
+        return
+      }
+
+      try {
+        setIsResultsLoading(true)
+
+        const templates = await getTemplatesBySearchParams(
+          searchParams,
+          abortController.signal,
+        )
+
+        setFoundTemplates(templates)
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setSearchError('Не удалось загрузить результаты поиска. Попробуйте ещё раз.')
+          setFoundTemplates([])
+        }
+      } finally {
+        setIsResultsLoading(false)
+      }
+    }
+
+    loadResults()
+
+    return () => {
+      abortController.abort()
+    }
+  }, [searchParams])
+
+  function handleSearchInputChange(event) {
+    setSearchQuery(event.target.value)
+  }
+
+  function handleFilterChange(event) {
+    const { name, value } = event.target
+
+    setTemplateFilters({
+      ...templateFilters,
+      [name]: value,
+    })
+  }
+
+  function handleSearchSubmit(event) {
+    event.preventDefault()
+
+    const params = createSearchParamsFromForm(searchQuery, templateFilters)
+
+    setSearchParams(params)
+    navigate(`/templates?${params.toString()}`)
+  }
+
+  function handleResetFilters() {
+    setSearchQuery('')
+    setTemplateFilters(emptyTemplateFilters)
+    setTemplateSuggestions([])
+    setFoundTemplates([])
+    setSearchError('')
+    setSearchParams({})
+    navigate('/templates')
+  }
+
+  return (
+    <section className="page-card">
+      <div className="page-card__top">
+        <span className="page-card__label">Ящик шаблонов</span>
+        <span className="page-card__paper-mark">GET SEARCH</span>
+      </div>
+
+      <div className="page-card__content">
+        <h1>Шаблоны</h1>
+        <p>
+          Это GET-форма поиска по шаблонам. Параметры сохраняются в адресной строке,
+          поэтому результаты можно восстановить после перезагрузки страницы.
+        </p>
+      </div>
+
+      <form
+        className="template-catalog__filters"
+        method="get"
+        action="/templates"
+        onSubmit={handleSearchSubmit}
+      >
+        <div className="form-field">
+          <label htmlFor="template-search">Поиск</label>
+
+          <input
+            id="template-search"
+            name="q"
+            type="search"
+            value={searchQuery}
+            list="template-search-suggestions"
+            placeholder="Введите минимум 3 символа"
+            onChange={handleSearchInputChange}
+          />
+
+          <datalist id="template-search-suggestions">
+            {templateSuggestions.map((suggestion) => (
+              <option key={suggestion} value={suggestion} />
+            ))}
+          </datalist>
+
+          {queryIsNotEmptyButTooShort && (
+            <p className="form-field__hint">
+              Для поиска по тексту нужно ввести минимум 3 символа.
+            </p>
+          )}
+
+          {isSuggestionsLoading && (
+            <p className="form-field__hint">Загружаем подсказки...</p>
+          )}
+        </div>
+
+        <div className="template-catalog__filter-grid">
+          <CatalogSelect
+            id="filter-sphere"
+            name="sphere"
+            label="Сфера"
+            value={templateFilters.sphere}
+            options={templateSphereOptions}
+            emptyOptionLabel="Все сферы"
+            onChange={handleFilterChange}
+          />
+
+          <CatalogSelect
+            id="filter-tool"
+            name="tool"
+            label="Инструмент"
+            value={templateFilters.tool}
+            options={templateToolOptions}
+            emptyOptionLabel="Все инструменты"
+            onChange={handleFilterChange}
+          />
+
+          <CatalogSelect
+            id="filter-conversion-type"
+            name="conversionType"
+            label="Тип"
+            value={templateFilters.conversionType}
+            options={templateConversionTypeOptions}
+            emptyOptionLabel="Все типы"
+            onChange={handleFilterChange}
+          />
+        </div>
+
+        <div className="form-card__buttons">
+          <button
+            className="button button--primary"
+            type="submit"
+            disabled={queryIsNotEmptyButTooShort && !hasAnyFilter}
+          >
+            Найти шаблоны
+          </button>
+
+          <button className="button" type="button" onClick={handleResetFilters}>
+            Сбросить поиск
+          </button>
+        </div>
+      </form>
+
+      <div className="template-catalog">
+        <SearchStateMessage
+          queryIsLongEnough={queryIsLongEnough}
+          queryIsNotEmptyButTooShort={queryIsNotEmptyButTooShort}
+          hasAnyFilter={hasAnyFilter}
+          isResultsLoading={isResultsLoading}
+          searchError={searchError}
+          foundTemplatesLength={foundTemplates.length}
+        />
+
+        {!isResultsLoading && !searchError && foundTemplates.length > 0 && (
+          <div className="template-card-list">
+            {foundTemplates.map((template) => (
+              <article className="template-list-card" key={template.id}>
+                <div className="template-list-card__top">
+                  <span>{template.sphere}</span>
+                  <span>{template.tool}</span>
+                  <span>{template.conversionType}</span>
+                </div>
+
+                <h2>{template.title}</h2>
+                <p>{template.description}</p>
+
+                <div className="template-list-card__footer">
+                  <span>♥ {template.likes}</span>
+
+                  <Link className="button button--small" to={`/templates/${template.id}`}>
+                    Открыть карточку
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function SearchStateMessage({
+  queryIsLongEnough,
+  queryIsNotEmptyButTooShort,
+  hasAnyFilter,
+  isResultsLoading,
+  searchError,
+  foundTemplatesLength,
+}) {
+  if (isResultsLoading) {
+    return <div className="template-catalog__summary">Загружаем результаты поиска...</div>
+  }
+
+  if (searchError) {
+    return <div className="template-catalog__empty">{searchError}</div>
+  }
+
+  if (queryIsNotEmptyButTooShort && !hasAnyFilter) {
+    return (
+      <div className="template-catalog__empty">
+        Введите минимум 3 символа, чтобы отправить GET-запрос поиска.
+      </div>
+    )
+  }
+
+  if (!queryIsLongEnough && !hasAnyFilter) {
+    return (
+      <div className="template-catalog__empty">
+        Введите поисковый запрос или выберите фильтр, чтобы увидеть результаты.
+      </div>
+    )
+  }
+
+  if (foundTemplatesLength === 0) {
+    return (
+      <div className="template-catalog__empty">
+        Ничего не найдено. Попробуйте изменить запрос или фильтры.
+      </div>
+    )
+  }
+
+  return (
+    <div className="template-catalog__summary">
+      Найдено шаблонов: <strong>{foundTemplatesLength}</strong>
+    </div>
+  )
+}
+
+export function TemplateDetailPage() {
+  const { templateId } = useParams()
+  const template = findTemplateById(demoTemplates, templateId)
+  const [copyMessage, setCopyMessage] = useState('')
+
+  async function handleCopyPrompt() {
+    if (!template) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(template.prompt)
+      setCopyMessage('Промпт скопирован в буфер обмена.')
+    } catch {
+      setCopyMessage('Не удалось скопировать автоматически. Можно выделить текст вручную.')
+    }
+  }
+
+  if (!template) {
+    return (
+      <section className="page-card">
+        <div className="page-card__top">
+          <span className="page-card__label">Потерянная карточка</span>
+          <span className="page-card__paper-mark">404</span>
+        </div>
+
+        <div className="page-card__content">
+          <h1>Шаблон не найден</h1>
+          <p>Такой карточки шаблона нет в локальных mock-данных.</p>
+        </div>
+
+        <div className="page-card__actions">
+          <Link className="button button--primary" to="/templates">
+            Вернуться к шаблонам
+          </Link>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="page-card">
+      <div className="page-card__top">
+        <span className="page-card__label">Карточка шаблона</span>
+        <span className="page-card__paper-mark">TEMPLATE</span>
+      </div>
+
+      <div className="template-detail">
+        <div className="template-detail__content">
+          <div className="page-card__content">
+            <h1>{template.title}</h1>
+            <p>{template.description}</p>
+          </div>
+
+          <div className="template-detail__meta">
+            <span>Сфера: {template.sphere}</span>
+            <span>Инструмент: {template.tool}</span>
+            <span>Тип: {template.conversionType}</span>
+            <span>Лайки: {template.likes}</span>
+          </div>
+
+          <div className="template-detail__prompt-block">
+            <div className="template-detail__block-header">
+              <h2>Текст промпта</h2>
+
+              <button className="button button--small" type="button" onClick={handleCopyPrompt}>
+                Скопировать промпт
+              </button>
+            </div>
+
+            <pre className="template-detail__prompt-text">{template.prompt}</pre>
+
+            {copyMessage && <p className="form-card__success">{copyMessage}</p>}
+          </div>
+
+          <div className="template-detail__result">
+            <h2>Пример результата</h2>
+            <p>{template.result}</p>
+          </div>
+
+          <div className="page-card__actions">
+            <Link className="button" to="/templates">
+              Назад к шаблонам
+            </Link>
+
+            <Link className="button button--primary" to="/editor">
+              Открыть в редакторе
+            </Link>
+          </div>
+        </div>
+
+        <PromptSyntaxPreview promptText={template.prompt} />
+      </div>
+    </section>
+  )
+}
+
+function CatalogSelect({ id, name, label, value, options, emptyOptionLabel, onChange }) {
+  return (
+    <div className="form-field">
+      <label htmlFor={id}>{label}</label>
+
+      <select id={id} name={name} value={value} onChange={onChange}>
+        <option value="">{emptyOptionLabel}</option>
+
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}

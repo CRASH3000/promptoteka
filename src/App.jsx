@@ -1,79 +1,101 @@
-import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import {
+  ForgotPasswordForm,
+  LoginForm,
+  RegisterForm,
+} from './components/forms/AuthForms'
+import { TemplateCreationForm } from './components/forms/TemplateCreationForm'
+import {
+  TemplateCatalogPage,
+  TemplateDetailPage,
+} from './components/templates/TemplateCatalog'
 
 const mainNavigation = [
-  { path: "/", label: "Главная" },
-  { path: "/hub", label: "Промпт-хаб" },
-  { path: "/editor", label: "Редактор" },
-  { path: "/research", label: "Исследования" },
-  { path: "/templates", label: "Шаблоны" },
-  { path: "/knowledge", label: "База знаний" },
-];
+  { path: '/', label: 'Главная' },
+  { path: '/hub', label: 'Промпт-хаб' },
+  { path: '/editor', label: 'Редактор' },
+  { path: '/research', label: 'Исследования' },
+  { path: '/templates', label: 'Шаблоны' },
+  { path: '/knowledge', label: 'База знаний' },
+]
 
 const profileNavigation = [
-  { path: "/profile", label: "Профиль" },
-  { path: "/profile/templates", label: "Мои шаблоны" },
-  { path: "/profile/templates/new", label: "Создать шаблон" },
-  { path: "/profile/favorites", label: "Избранное" },
-];
+  { path: '/profile', label: 'Профиль' },
+  { path: '/profile/templates', label: 'Мои шаблоны' },
+  { path: '/profile/templates/new', label: 'Создать шаблон' },
+  { path: '/profile/favorites', label: 'Избранное' },
+]
 
 const breadcrumbsMap = {
-  "/": [{ label: "Главная" }],
-
-  "/hub": [{ label: "Главная", to: "/" }, { label: "Промпт-хаб" }],
-  "/hub/demo-prompt": [
-    { label: "Главная", to: "/" },
-    { label: "Промпт-хаб", to: "/hub" },
-    { label: "Карточка промпта" },
+  '/': [{ label: 'Главная' }],
+  '/hub': [
+    { label: 'Главная', to: '/' },
+    { label: 'Промпт-хаб' },
   ],
-
-  "/editor": [{ label: "Главная", to: "/" }, { label: "Редактор промптов" }],
-
-  "/research": [{ label: "Главная", to: "/" }, { label: "Исследования" }],
-  "/research/demo-research": [
-    { label: "Главная", to: "/" },
-    { label: "Исследования", to: "/research" },
-    { label: "Карточка исследования" },
+  '/hub/demo-prompt': [
+    { label: 'Главная', to: '/' },
+    { label: 'Промпт-хаб', to: '/hub' },
+    { label: 'Карточка промпта' },
   ],
-
-  "/templates": [{ label: "Главная", to: "/" }, { label: "Шаблоны" }],
-  "/templates/demo-template": [
-    { label: "Главная", to: "/" },
-    { label: "Шаблоны", to: "/templates" },
-    { label: "Карточка шаблона" },
+  '/editor': [
+    { label: 'Главная', to: '/' },
+    { label: 'Редактор промптов' },
   ],
-
-  "/knowledge": [{ label: "Главная", to: "/" }, { label: "База знаний" }],
-
-  "/auth/login": [{ label: "Главная", to: "/" }, { label: "Вход" }],
-  "/auth/register": [{ label: "Главная", to: "/" }, { label: "Регистрация" }],
-  "/auth/forgot-password": [
-    { label: "Главная", to: "/" },
-    { label: "Восстановление пароля" },
+  '/research': [
+    { label: 'Главная', to: '/' },
+    { label: 'Исследования' },
   ],
-
-  "/profile": [{ label: "Главная", to: "/" }, { label: "Личный кабинет" }],
-  "/profile/edit": [
-    { label: "Главная", to: "/" },
-    { label: "Личный кабинет", to: "/profile" },
-    { label: "Редактирование профиля" },
+  '/research/demo-research': [
+    { label: 'Главная', to: '/' },
+    { label: 'Исследования', to: '/research' },
+    { label: 'Карточка исследования' },
   ],
-  "/profile/templates": [
-    { label: "Главная", to: "/" },
-    { label: "Личный кабинет", to: "/profile" },
-    { label: "Мои шаблоны" },
+  '/templates': [
+    { label: 'Главная', to: '/' },
+    { label: 'Шаблоны' },
   ],
-  "/profile/templates/new": [
-    { label: "Главная", to: "/" },
-    { label: "Личный кабинет", to: "/profile" },
-    { label: "Мои шаблоны", to: "/profile/templates" },
-    { label: "Создать шаблон" },
+  '/knowledge': [
+    { label: 'Главная', to: '/' },
+    { label: 'База знаний' },
   ],
-  "/profile/favorites": [
-    { label: "Главная", to: "/" },
-    { label: "Личный кабинет", to: "/profile" },
-    { label: "Избранное" },
+  '/auth/login': [
+    { label: 'Главная', to: '/' },
+    { label: 'Вход' },
   ],
-};
+  '/auth/register': [
+    { label: 'Главная', to: '/' },
+    { label: 'Регистрация' },
+  ],
+  '/auth/forgot-password': [
+    { label: 'Главная', to: '/' },
+    { label: 'Восстановление пароля' },
+  ],
+  '/profile': [
+    { label: 'Главная', to: '/' },
+    { label: 'Личный кабинет' },
+  ],
+  '/profile/edit': [
+    { label: 'Главная', to: '/' },
+    { label: 'Личный кабинет', to: '/profile' },
+    { label: 'Редактирование профиля' },
+  ],
+  '/profile/templates': [
+    { label: 'Главная', to: '/' },
+    { label: 'Личный кабинет', to: '/profile' },
+    { label: 'Мои шаблоны' },
+  ],
+  '/profile/templates/new': [
+    { label: 'Главная', to: '/' },
+    { label: 'Личный кабинет', to: '/profile' },
+    { label: 'Мои шаблоны', to: '/profile/templates' },
+    { label: 'Создать шаблон' },
+  ],
+  '/profile/favorites': [
+    { label: 'Главная', to: '/' },
+    { label: 'Личный кабинет', to: '/profile' },
+    { label: 'Избранное' },
+  ],
+}
 
 function App() {
   return (
@@ -97,13 +119,13 @@ function App() {
                     description="Картотека промптов для ИИ-инструментов. Здесь пользователь может находить готовые промпты, создавать свои шаблоны и сохранять полезные материалы."
                     actions={[
                       {
-                        to: "/hub",
-                        label: "Открыть промпт-хаб",
-                        variant: "primary",
+                        to: '/templates',
+                        label: 'Открыть шаблоны',
+                        variant: 'primary',
                       },
                       {
-                        to: "/editor",
-                        label: "Перейти в редактор",
+                        to: '/profile/templates/new',
+                        label: 'Создать шаблон',
                       },
                     ]}
                   />
@@ -116,16 +138,16 @@ function App() {
                   <Page
                     label="Публичный ящик"
                     title="Промпт-хаб"
-                    description="Каталог публичных промптов с поиском и фильтрацией по сфере применения, инструменту и типу конвертации."
+                    description="Позже здесь будет публичный каталог промптов пользователей. На текущем этапе основной каталог для тестов находится в разделе шаблонов."
                     actions={[
                       {
-                        to: "/hub/demo-prompt",
-                        label: "Открыть карточку промпта",
-                        variant: "primary",
+                        to: '/templates',
+                        label: 'Открыть шаблоны',
+                        variant: 'primary',
                       },
                       {
-                        to: "/editor",
-                        label: "Использовать в редакторе",
+                        to: '/editor',
+                        label: 'Использовать редактор',
                       },
                     ]}
                   />
@@ -141,13 +163,13 @@ function App() {
                     description="На этой странице будет текст промпта, результат, инструмент, сфера применения и действия: скопировать, добавить в избранное, открыть в редакторе."
                     actions={[
                       {
-                        to: "/hub",
-                        label: "Назад в каталог",
+                        to: '/hub',
+                        label: 'Назад в каталог',
                       },
                       {
-                        to: "/editor",
-                        label: "Открыть в редакторе",
-                        variant: "primary",
+                        to: '/editor',
+                        label: 'Открыть в редакторе',
+                        variant: 'primary',
                       },
                     ]}
                   />
@@ -163,13 +185,13 @@ function App() {
                     description="Место, где пользователь пишет промпт, использует подсветку синтаксиса, быстрые действия и сохраняет удачный результат как шаблон."
                     actions={[
                       {
-                        to: "/templates",
-                        label: "Выбрать шаблон",
+                        to: '/templates',
+                        label: 'Выбрать шаблон',
                       },
                       {
-                        to: "/profile/templates/new",
-                        label: "Создать шаблон",
-                        variant: "primary",
+                        to: '/profile/templates/new',
+                        label: 'Создать шаблон',
+                        variant: 'primary',
                       },
                     ]}
                   />
@@ -185,13 +207,13 @@ function App() {
                     description="Раздел с исследованиями и краткими выводами по промпт-инжинирингу и работе с ИИ-инструментами."
                     actions={[
                       {
-                        to: "/research/demo-research",
-                        label: "Открыть исследование",
-                        variant: "primary",
+                        to: '/research/demo-research',
+                        label: 'Открыть исследование',
+                        variant: 'primary',
                       },
                       {
-                        to: "/editor",
-                        label: "Попробовать в редакторе",
+                        to: '/editor',
+                        label: 'Попробовать в редакторе',
                       },
                     ]}
                   />
@@ -207,62 +229,21 @@ function App() {
                     description="Здесь будет описание исследования, краткий вывод и связанные шаблоны или промпты."
                     actions={[
                       {
-                        to: "/research",
-                        label: "Назад к исследованиям",
+                        to: '/research',
+                        label: 'Назад к исследованиям',
                       },
                       {
-                        to: "/editor",
-                        label: "Применить в редакторе",
-                        variant: "primary",
+                        to: '/editor',
+                        label: 'Применить в редакторе',
+                        variant: 'primary',
                       },
                     ]}
                   />
                 }
               />
 
-              <Route
-                path="/templates"
-                element={
-                  <Page
-                    label="Ящик шаблонов"
-                    title="Шаблоны"
-                    description="Готовые структуры промптов, которые пользователь может открыть, изменить и использовать для своих задач."
-                    actions={[
-                      {
-                        to: "/templates/demo-template",
-                        label: "Открыть шаблон",
-                        variant: "primary",
-                      },
-                      {
-                        to: "/profile/templates/new",
-                        label: "Создать свой",
-                      },
-                    ]}
-                  />
-                }
-              />
-
-              <Route
-                path="/templates/demo-template"
-                element={
-                  <Page
-                    label="Карточка шаблона"
-                    title="Демо-шаблон"
-                    description="Страница одного шаблона с текстом промпта, примером результата и кнопкой перехода в редактор."
-                    actions={[
-                      {
-                        to: "/templates",
-                        label: "Назад к шаблонам",
-                      },
-                      {
-                        to: "/editor",
-                        label: "Открыть в редакторе",
-                        variant: "primary",
-                      },
-                    ]}
-                  />
-                }
-              />
+              <Route path="/templates" element={<TemplateCatalogPage />} />
+              <Route path="/templates/:templateId" element={<TemplateDetailPage />} />
 
               <Route
                 path="/knowledge"
@@ -273,80 +254,22 @@ function App() {
                     description="Раздел со статьями по форматированию промптов, структуре инструкций и приёмам работы с ИИ."
                     actions={[
                       {
-                        to: "/research",
-                        label: "Открыть исследования",
+                        to: '/research',
+                        label: 'Открыть исследования',
                       },
                       {
-                        to: "/editor",
-                        label: "Перейти к практике",
-                        variant: "primary",
+                        to: '/editor',
+                        label: 'Перейти к практике',
+                        variant: 'primary',
                       },
                     ]}
                   />
                 }
               />
 
-              <Route
-                path="/auth/login"
-                element={
-                  <Page
-                    label="Сервисная карточка"
-                    title="Вход"
-                    description="Форма входа пользователя по email и паролю."
-                    actions={[
-                      {
-                        to: "/auth/register",
-                        label: "Создать аккаунт",
-                      },
-                      {
-                        to: "/profile",
-                        label: "Войти в кабинет",
-                        variant: "primary",
-                      },
-                    ]}
-                  />
-                }
-              />
-
-              <Route
-                path="/auth/register"
-                element={
-                  <Page
-                    label="Сервисная карточка"
-                    title="Регистрация"
-                    description="Форма создания аккаунта для сохранения шаблонов и избранного."
-                    actions={[
-                      {
-                        to: "/auth/login",
-                        label: "Уже есть аккаунт",
-                      },
-                      {
-                        to: "/profile",
-                        label: "Перейти в кабинет",
-                        variant: "primary",
-                      },
-                    ]}
-                  />
-                }
-              />
-
-              <Route
-                path="/auth/forgot-password"
-                element={
-                  <Page
-                    label="Сервисная карточка"
-                    title="Восстановление пароля"
-                    description="Форма восстановления доступа к аккаунту."
-                    actions={[
-                      {
-                        to: "/auth/login",
-                        label: "Вернуться ко входу",
-                        variant: "primary",
-                      },
-                    ]}
-                  />
-                }
-              />
+              <Route path="/auth/login" element={<LoginForm />} />
+              <Route path="/auth/register" element={<RegisterForm />} />
+              <Route path="/auth/forgot-password" element={<ForgotPasswordForm />} />
 
               <Route path="/profile" element={<ProfilePage />} />
 
@@ -359,9 +282,9 @@ function App() {
                     description="Здесь пользователь сможет изменить имя, фото и данные профиля."
                     actions={[
                       {
-                        to: "/profile",
-                        label: "Назад в кабинет",
-                        variant: "primary",
+                        to: '/profile',
+                        label: 'Назад в кабинет',
+                        variant: 'primary',
                       },
                     ]}
                   />
@@ -377,40 +300,20 @@ function App() {
                     description="Список шаблонов, которые пользователь создал сам."
                     actions={[
                       {
-                        to: "/profile/templates/new",
-                        label: "Создать шаблон",
-                        variant: "primary",
+                        to: '/profile/templates/new',
+                        label: 'Создать шаблон',
+                        variant: 'primary',
                       },
                       {
-                        to: "/profile",
-                        label: "Назад в кабинет",
+                        to: '/profile',
+                        label: 'Назад в кабинет',
                       },
                     ]}
                   />
                 }
               />
 
-              <Route
-                path="/profile/templates/new"
-                element={
-                  <Page
-                    label="Новая карточка"
-                    title="Создать шаблон"
-                    description="Форма создания собственного шаблона промпта. Позже здесь появится textarea, валидация и редактор с подсветкой."
-                    actions={[
-                      {
-                        to: "/profile/templates",
-                        label: "Мои шаблоны",
-                      },
-                      {
-                        to: "/editor",
-                        label: "Открыть редактор",
-                        variant: "primary",
-                      },
-                    ]}
-                  />
-                }
-              />
+              <Route path="/profile/templates/new" element={<TemplateCreationForm />} />
 
               <Route
                 path="/profile/favorites"
@@ -421,13 +324,13 @@ function App() {
                     description="Здесь будут храниться шаблоны других пользователей, которые были добавлены в избранное."
                     actions={[
                       {
-                        to: "/hub",
-                        label: "Найти промпты",
-                        variant: "primary",
+                        to: '/templates',
+                        label: 'Найти шаблоны',
+                        variant: 'primary',
                       },
                       {
-                        to: "/profile",
-                        label: "Назад в кабинет",
+                        to: '/profile',
+                        label: 'Назад в кабинет',
                       },
                     ]}
                   />
@@ -443,13 +346,13 @@ function App() {
                     description="Такой страницы пока нет. Пользователь не должен оставаться в тупике, поэтому здесь есть переходы назад."
                     actions={[
                       {
-                        to: "/",
-                        label: "На главную",
-                        variant: "primary",
+                        to: '/',
+                        label: 'На главную',
+                        variant: 'primary',
                       },
                       {
-                        to: "/hub",
-                        label: "В промпт-хаб",
+                        to: '/templates',
+                        label: 'К шаблонам',
                       },
                     ]}
                   />
@@ -462,7 +365,7 @@ function App() {
 
       <Footer />
     </div>
-  );
+  )
 }
 
 function Header() {
@@ -490,7 +393,7 @@ function Header() {
         </Link>
       </nav>
     </header>
-  );
+  )
 }
 
 function Sidebar() {
@@ -501,7 +404,7 @@ function Sidebar() {
 
         <nav className="sidebar__nav" aria-label="Разделы сайта">
           {mainNavigation.map((item) => (
-            <NavLink key={item.path} to={item.path} end={item.path === "/"}>
+            <NavLink key={item.path} to={item.path} end={item.path === '/'}>
               {item.label}
             </NavLink>
           ))}
@@ -520,20 +423,17 @@ function Sidebar() {
         </nav>
       </section>
     </aside>
-  );
+  )
 }
 
 function Breadcrumbs() {
-  const location = useLocation();
-  const breadcrumbs = breadcrumbsMap[location.pathname] || [
-    { label: "Главная", to: "/" },
-    { label: "Неизвестная страница" },
-  ];
+  const location = useLocation()
+  const breadcrumbs = createBreadcrumbsByPath(location.pathname)
 
   return (
     <div className="breadcrumbs" aria-label="Хлебные крошки">
       {breadcrumbs.map((item, index) => {
-        const isLast = index === breadcrumbs.length - 1;
+        const isLast = index === breadcrumbs.length - 1
 
         return (
           <span key={`${item.label}-${index}`} className="breadcrumbs__item">
@@ -545,10 +445,29 @@ function Breadcrumbs() {
 
             {!isLast && <span className="breadcrumbs__separator">/</span>}
           </span>
-        );
+        )
       })}
     </div>
-  );
+  )
+}
+
+function createBreadcrumbsByPath(pathname) {
+  if (breadcrumbsMap[pathname]) {
+    return breadcrumbsMap[pathname]
+  }
+
+  if (pathname.startsWith('/templates/')) {
+    return [
+      { label: 'Главная', to: '/' },
+      { label: 'Шаблоны', to: '/templates' },
+      { label: 'Карточка шаблона' },
+    ]
+  }
+
+  return [
+    { label: 'Главная', to: '/' },
+    { label: 'Неизвестная страница' },
+  ]
 }
 
 function Page({ label, title, description, actions = [] }) {
@@ -569,14 +488,14 @@ function Page({ label, title, description, actions = [] }) {
           <Link
             key={`${action.to}-${action.label}`}
             to={action.to}
-            className={`button ${action.variant === "primary" ? "button--primary" : ""}`}
+            className={`button ${action.variant === 'primary' ? 'button--primary' : ''}`}
           >
             {action.label}
           </Link>
         ))}
       </div>
     </section>
-  );
+  )
 }
 
 function ProfilePage() {
@@ -589,9 +508,7 @@ function ProfilePage() {
 
       <div className="page-card__content">
         <h1>Личный кабинет</h1>
-        <p>
-          Здесь будут профиль пользователя, его шаблоны и избранные материалы.
-        </p>
+        <p>Здесь будут профиль пользователя, его шаблоны и избранные материалы.</p>
       </div>
 
       <div className="tabs">
@@ -604,7 +521,7 @@ function ProfilePage() {
         <NavLink to="/profile/edit">Редактировать профиль</NavLink>
       </div>
     </section>
-  );
+  )
 }
 
 function Footer() {
@@ -615,10 +532,10 @@ function Footer() {
       <nav aria-label="Служебная навигация">
         <Link to="/knowledge">База знаний</Link>
         <Link to="/research">Исследования</Link>
-        <Link to="/hub">Промпт-хаб</Link>
+        <Link to="/templates">Шаблоны</Link>
       </nav>
     </footer>
-  );
+  )
 }
 
-export default App;
+export default App
