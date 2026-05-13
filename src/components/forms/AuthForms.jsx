@@ -49,7 +49,7 @@ export function LoginForm() {
       return
     }
 
-    setSuccessMessage('Вход выполнен успешно. В реальном проекте здесь будет запрос к серверу.')
+    setSuccessMessage('Вход выполнен успешно.')
   }
 
   return (
@@ -121,7 +121,7 @@ export function RegisterForm() {
       return
     }
 
-    setSuccessMessage('Регистрация прошла успешно. В реальном проекте данные ушли бы на сервер.')
+    setSuccessMessage('Регистрация прошла успешно.')
   }
 
   return (

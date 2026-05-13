@@ -56,6 +56,6 @@ test('пользователь регистрируется, входит и с�
   await page.getByRole('button', { name: 'Сохранить шаблон' }).click()
 
   await expect(
-    page.getByText('Шаблон сохранён локально. Редактор промптов подключён вместо обычного textarea.'),
+    page.getByText('Шаблон сохранён.'),
   ).toBeVisible()
 })
