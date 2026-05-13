@@ -1,19 +1,34 @@
-import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
+import {
+  Link,
+  Navigate,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom'
+import promptotekaLogoSticker from './assets/promptoteka-logo-sticker-optimized.png'
 import {
   ForgotPasswordForm,
   LoginForm,
   RegisterForm,
 } from './components/forms/AuthForms'
-import { TemplateCreationForm } from './components/forms/TemplateCreationForm'
 import {
   TemplateCatalogPage,
   TemplateDetailPage,
 } from './components/templates/TemplateCatalog'
+import { KnowledgeBasePage } from './pages/KnowledgeBasePage'
+import { ResearchPage } from './pages/ResearchPage'
+
+const TemplateCreationForm = lazy(() =>
+  import('./components/forms/TemplateCreationForm').then((module) => ({
+    default: module.TemplateCreationForm,
+  })),
+)
 
 const mainNavigation = [
   { path: '/', label: 'Главная' },
   { path: '/hub', label: 'Промпт-хаб' },
-  { path: '/editor', label: 'Редактор' },
   { path: '/research', label: 'Исследования' },
   { path: '/templates', label: 'Шаблоны' },
   { path: '/knowledge', label: 'База знаний' },
@@ -36,10 +51,6 @@ const breadcrumbsMap = {
     { label: 'Главная', to: '/' },
     { label: 'Промпт-хаб', to: '/hub' },
     { label: 'Карточка промпта' },
-  ],
-  '/editor': [
-    { label: 'Главная', to: '/' },
-    { label: 'Редактор промптов' },
   ],
   '/research': [
     { label: 'Главная', to: '/' },
@@ -99,9 +110,7 @@ const breadcrumbsMap = {
 
 function App() {
   return (
-    <div className="app">
-      <Header />
-
+    <div className="app app--drawer-only">
       <div className="app__body">
         <Sidebar />
 
@@ -110,13 +119,15 @@ function App() {
             <Breadcrumbs />
 
             <Routes>
+              <Route path="/" element={<HomeInstructionPage />} />
+
               <Route
-                path="/"
+                path="/hub"
                 element={
                   <Page
-                    label="Стартовая карточка"
-                    title="Промптотека"
-                    description="Картотека промптов для ИИ-инструментов. Здесь пользователь может находить готовые промпты, создавать свои шаблоны и сохранять полезные материалы."
+                    label="Публичный ящик"
+                    title="Промпт-хаб"
+                    description="[В. РАЗРАБОТКЕ] Каталог промптов от пользователей с поиском идей, популярными шаблонами и сохранением полезных карточек в избранное."
                     actions={[
                       {
                         to: '/templates',
@@ -126,28 +137,6 @@ function App() {
                       {
                         to: '/profile/templates/new',
                         label: 'Создать шаблон',
-                      },
-                    ]}
-                  />
-                }
-              />
-
-              <Route
-                path="/hub"
-                element={
-                  <Page
-                    label="Публичный ящик"
-                    title="Промпт-хаб"
-                    description="Позже здесь будет публичный каталог промптов пользователей. На текущем этапе основной каталог для тестов находится в разделе шаблонов."
-                    actions={[
-                      {
-                        to: '/templates',
-                        label: 'Открыть шаблоны',
-                        variant: 'primary',
-                      },
-                      {
-                        to: '/editor',
-                        label: 'Использовать редактор',
                       },
                     ]}
                   />
@@ -160,15 +149,15 @@ function App() {
                   <Page
                     label="Карточка промпта"
                     title="Демо-промпт"
-                    description="На этой странице будет текст промпта, результат, инструмент, сфера применения и действия: скопировать, добавить в избранное, открыть в редакторе."
+                    description="На этой странице будет текст промпта, результат, инструмент, сфера применения и действия: скопировать, добавить в избранное, использовать как основу для нового шаблона."
                     actions={[
                       {
                         to: '/hub',
                         label: 'Назад в каталог',
                       },
                       {
-                        to: '/editor',
-                        label: 'Открыть в редакторе',
+                        to: '/profile/templates/new',
+                        label: 'Создать похожий шаблон',
                         variant: 'primary',
                       },
                     ]}
@@ -178,47 +167,10 @@ function App() {
 
               <Route
                 path="/editor"
-                element={
-                  <Page
-                    label="Рабочая карточка"
-                    title="Редактор промптов"
-                    description="Место, где пользователь пишет промпт, использует подсветку синтаксиса, быстрые действия и сохраняет удачный результат как шаблон."
-                    actions={[
-                      {
-                        to: '/templates',
-                        label: 'Выбрать шаблон',
-                      },
-                      {
-                        to: '/profile/templates/new',
-                        label: 'Создать шаблон',
-                        variant: 'primary',
-                      },
-                    ]}
-                  />
-                }
+                element={<Navigate to="/profile/templates/new" replace />}
               />
 
-              <Route
-                path="/research"
-                element={
-                  <Page
-                    label="Справочный ящик"
-                    title="Исследования"
-                    description="Раздел с исследованиями и краткими выводами по промпт-инжинирингу и работе с ИИ-инструментами."
-                    actions={[
-                      {
-                        to: '/research/demo-research',
-                        label: 'Открыть исследование',
-                        variant: 'primary',
-                      },
-                      {
-                        to: '/editor',
-                        label: 'Попробовать в редакторе',
-                      },
-                    ]}
-                  />
-                }
-              />
+              <Route path="/research" element={<ResearchPage />} />
 
               <Route
                 path="/research/demo-research"
@@ -233,8 +185,8 @@ function App() {
                         label: 'Назад к исследованиям',
                       },
                       {
-                        to: '/editor',
-                        label: 'Применить в редакторе',
+                        to: '/profile/templates/new',
+                        label: 'Создать шаблон по исследованию',
                         variant: 'primary',
                       },
                     ]}
@@ -245,27 +197,7 @@ function App() {
               <Route path="/templates" element={<TemplateCatalogPage />} />
               <Route path="/templates/:templateId" element={<TemplateDetailPage />} />
 
-              <Route
-                path="/knowledge"
-                element={
-                  <Page
-                    label="Учебный ящик"
-                    title="База знаний"
-                    description="Раздел со статьями по форматированию промптов, структуре инструкций и приёмам работы с ИИ."
-                    actions={[
-                      {
-                        to: '/research',
-                        label: 'Открыть исследования',
-                      },
-                      {
-                        to: '/editor',
-                        label: 'Перейти к практике',
-                        variant: 'primary',
-                      },
-                    ]}
-                  />
-                }
-              />
+              <Route path="/knowledge" element={<KnowledgeBasePage />} />
 
               <Route path="/auth/login" element={<LoginForm />} />
               <Route path="/auth/register" element={<RegisterForm />} />
@@ -297,7 +229,7 @@ function App() {
                   <Page
                     label="Личный ящик"
                     title="Мои шаблоны"
-                    description="Список шаблонов, которые пользователь создал сам."
+                    description="[В РАЗРАБОТКЕ] Список шаблонов, которые пользователь создал сам."
                     actions={[
                       {
                         to: '/profile/templates/new',
@@ -313,7 +245,14 @@ function App() {
                 }
               />
 
-              <Route path="/profile/templates/new" element={<TemplateCreationForm />} />
+              <Route
+                path="/profile/templates/new"
+                element={
+                  <Suspense fallback={<EditorLoadingCard />}>
+                    <TemplateCreationForm />
+                  </Suspense>
+                }
+              />
 
               <Route
                 path="/profile/favorites"
@@ -321,7 +260,7 @@ function App() {
                   <Page
                     label="Избранный ящик"
                     title="Избранное"
-                    description="Здесь будут храниться шаблоны других пользователей, которые были добавлены в избранное."
+                    description="[В РАЗРАБОТКЕ] Шаблоны других пользователей, которые были добавлены в избранное."
                     actions={[
                       {
                         to: '/templates',
@@ -362,50 +301,38 @@ function App() {
           </div>
         </main>
       </div>
-
-      <Footer />
     </div>
-  )
-}
-
-function Header() {
-  return (
-    <header className="header">
-      <Link to="/" className="logo">
-        <span className="logo__icon">▤</span>
-
-        <span>
-          <strong>Промптотека</strong>
-          <small>картотека промптов</small>
-        </span>
-      </Link>
-
-      <nav className="header__nav" aria-label="Главная навигация">
-        <NavLink to="/hub">Промпт-хаб</NavLink>
-        <NavLink to="/editor">Редактор</NavLink>
-        <NavLink to="/research">Исследования</NavLink>
-        <NavLink to="/templates">Шаблоны</NavLink>
-      </nav>
-
-      <nav className="header__auth" aria-label="Навигация пользователя">
-        <Link to="/auth/login" className="button button--small">
-          Войти
-        </Link>
-      </nav>
-    </header>
   )
 }
 
 function Sidebar() {
   return (
-    <aside className="sidebar">
+    <aside className="sidebar cabinet-sidebar">
+      <Link to="/" className="cabinet-brand cabinet-brand--sticker">
+        <img
+          className="cabinet-brand__sticker"
+          src={promptotekaLogoSticker}
+          alt="Промптотека — картотека промптов"
+          width="800"
+          height="533"
+          loading="eager"
+        />
+      </Link>
+
       <section className="sidebar__section">
         <p className="sidebar__title">Основные ящики</p>
 
-        <nav className="sidebar__nav" aria-label="Разделы сайта">
+        <nav className="sidebar__nav cabinet-drawer-nav" aria-label="Разделы сайта">
           {mainNavigation.map((item) => (
-            <NavLink key={item.path} to={item.path} end={item.path === '/'}>
-              {item.label}
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === '/'}
+              className={({ isActive }) =>
+                `drawer-link ${isActive ? 'active' : ''}`
+              }
+            >
+              <span className="drawer-label">{item.label}</span>
             </NavLink>
           ))}
         </nav>
@@ -414,14 +341,27 @@ function Sidebar() {
       <section className="sidebar__section">
         <p className="sidebar__title">Личный раздел</p>
 
-        <nav className="sidebar__nav" aria-label="Личный кабинет">
+        <nav className="sidebar__nav cabinet-drawer-nav" aria-label="Личный кабинет">
           {profileNavigation.map((item) => (
-            <NavLink key={item.path} to={item.path} end>
-              {item.label}
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end
+              className={({ isActive }) =>
+                `drawer-link drawer-link--profile-label ${isActive ? 'active' : ''}`
+              }
+            >
+              <span className="drawer-label">{item.label}</span>
             </NavLink>
           ))}
         </nav>
       </section>
+
+      <div className="cabinet-sidebar__bottom">
+        <Link to="/auth/login" className="cabinet-login-ticket">
+          Войти
+        </Link>
+      </div>
     </aside>
   )
 }
@@ -470,6 +410,111 @@ function createBreadcrumbsByPath(pathname) {
   ]
 }
 
+function HomeInstructionPage() {
+  return (
+    <section className="instruction-spread" aria-labelledby="home-page-title">
+      <div className="instruction-spread__header">
+        <p className="instruction-spread__code">SYSTEM / PROMPTOTEKA / MODEL 01</p>
+
+        <h1 id="home-page-title">Промптотека</h1>
+
+        <p className="instruction-spread__lead">
+          Карточная система для промптов, шаблонов, исследований и рабочих
+          инструкций для ИИ-инструментов.
+        </p>
+      </div>
+
+      <div className="instruction-spread__pages" aria-label="Как пользоваться Промптотекой">
+        <article className="instruction-page instruction-page--first">
+          <div className="instruction-page__stamp">SECTION 01</div>
+
+          <h2>Найдите готовую карточку</h2>
+
+          <p>
+            Откройте каталог шаблонов, используйте поиск и фильтры, чтобы быстро
+            найти подходящий промпт под свою задачу.
+          </p>
+
+          <ul className="instruction-page__list">
+            <li>поиск по названию и описанию;</li>
+            <li>фильтрация по сфере и инструменту;</li>
+            <li>просмотр детальной карточки.</li>
+          </ul>
+
+          <Link to="/templates" className="button button--primary">
+            Открыть шаблоны
+          </Link>
+        </article>
+
+        <article className="instruction-page instruction-page--second">
+          <div className="instruction-page__stamp">SECTION 02</div>
+
+          <h2>Создайте свой шаблон</h2>
+
+          <p>
+            Форма создания шаблона уже содержит редактор промпта, быстрые вставки
+            и предпросмотр подсветки синтаксиса.
+          </p>
+
+          <div className="instruction-page__example">
+            <span>## Роль</span>
+            <span>{'{{переменная}}'}</span>
+            <span>+++Format</span>
+          </div>
+
+          <Link to="/profile/templates/new" className="button">
+            Создать шаблон
+          </Link>
+        </article>
+
+        <article className="instruction-page instruction-page--third">
+          <div className="instruction-page__stamp">SECTION 03</div>
+
+          <h2>Сохраните результат</h2>
+
+          <p>
+            Удачный промпт можно оформить как шаблон: заполнить название,
+            выбрать параметры и сохранить карточку в личную картотеку.
+          </p>
+
+          <ul className="instruction-page__list">
+            <li>название шаблона;</li>
+            <li>сфера применения;</li>
+            <li>пример результата.</li>
+          </ul>
+
+          <Link to="/profile/templates/new" className="button">
+            Создать карточку
+          </Link>
+        </article>
+      </div>
+
+      <div className="instruction-spread__footer">
+        <p>
+          Принцип простой: открыл ящик → выбрал карточку → применил промпт →
+          сохранил удачный вариант.
+        </p>
+      </div>
+    </section>
+  )
+}
+
+function EditorLoadingCard() {
+  return (
+    <section className="page-card">
+      <div className="page-card__top">
+        <span className="page-card__label">Загрузка бланка</span>
+        <span className="page-card__paper-mark">LOADING</span>
+      </div>
+
+      <div className="page-card__content">
+        <h1>Готовим редактор</h1>
+        <p>Секунду, достаём рабочую карточку из картотеки.</p>
+      </div>
+    </section>
+  )
+}
+
 function Page({ label, title, description, actions = [] }) {
   return (
     <section className="page-card">
@@ -508,7 +553,7 @@ function ProfilePage() {
 
       <div className="page-card__content">
         <h1>Личный кабинет</h1>
-        <p>Здесь будут профиль пользователя, его шаблоны и избранные материалы.</p>
+        <p>[В РАЗРАБОТКЕ] Профиль пользователя, его шаблоны и избранные материалы.</p>
       </div>
 
       <div className="tabs">
@@ -521,20 +566,6 @@ function ProfilePage() {
         <NavLink to="/profile/edit">Редактировать профиль</NavLink>
       </div>
     </section>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="footer">
-      <span>Промптотека — учебный проект</span>
-
-      <nav aria-label="Служебная навигация">
-        <Link to="/knowledge">База знаний</Link>
-        <Link to="/research">Исследования</Link>
-        <Link to="/templates">Шаблоны</Link>
-      </nav>
-    </footer>
   )
 }
 

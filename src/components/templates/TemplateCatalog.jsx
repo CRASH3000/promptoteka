@@ -11,6 +11,13 @@ import {
   getTemplateSuggestionsByQuery,
   getTemplatesBySearchParams,
 } from '../../utils/mockTemplateGetApi'
+import {
+  checkTemplateIsLiked,
+  getLikedTemplateIdsFromStorage,
+  getTemplateLikesCount,
+  saveLikedTemplateIdsToStorage,
+  toggleTemplateLike,
+} from '../../utils/templateLikesStorage'
 import { PromptSyntaxPreview } from '../editor/PromptSyntaxPreview'
 
 const emptyTemplateFilters = {
@@ -66,12 +73,19 @@ export function TemplateCatalogPage() {
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false)
   const [isResultsLoading, setIsResultsLoading] = useState(false)
   const [searchError, setSearchError] = useState('')
+  const [likedTemplateIds, setLikedTemplateIds] = useState(() =>
+    getLikedTemplateIdsFromStorage(),
+  )
 
   const queryIsLongEnough = searchQuery.trim().length >= 3
   const queryIsNotEmptyButTooShort = searchQuery.trim().length > 0 && !queryIsLongEnough
   const hasAnyFilter = Boolean(
     templateFilters.sphere || templateFilters.tool || templateFilters.conversionType,
   )
+
+  useEffect(() => {
+    saveLikedTemplateIdsToStorage(likedTemplateIds)
+  }, [likedTemplateIds])
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -195,6 +209,12 @@ export function TemplateCatalogPage() {
     navigate('/templates')
   }
 
+  function handleToggleTemplateLike(templateId) {
+    setLikedTemplateIds((currentLikedTemplateIds) =>
+      toggleTemplateLike(templateId, currentLikedTemplateIds),
+    )
+  }
+
   return (
     <section className="page-card">
       <div className="page-card__top">
@@ -205,8 +225,8 @@ export function TemplateCatalogPage() {
       <div className="page-card__content">
         <h1>Шаблоны</h1>
         <p>
-          Это GET-форма поиска по шаблонам. Параметры сохраняются в адресной строке,
-          поэтому результаты можно восстановить после перезагрузки страницы.
+          Готовые шаблоны промптов можно искать по названию, сфере применения, инструменту и типу задачи. 
+          Поиск сохраняется в адресной строке, поэтому к результатам легко вернуться позже.
         </p>
       </div>
 
@@ -305,26 +325,46 @@ export function TemplateCatalogPage() {
 
         {!isResultsLoading && !searchError && foundTemplates.length > 0 && (
           <div className="template-card-list">
-            {foundTemplates.map((template) => (
-              <article className="template-list-card" key={template.id}>
-                <div className="template-list-card__top">
-                  <span>{template.sphere}</span>
-                  <span>{template.tool}</span>
-                  <span>{template.conversionType}</span>
-                </div>
+            {foundTemplates.map((template) => {
+              const templateIsLiked = checkTemplateIsLiked(
+                template.id,
+                likedTemplateIds,
+              )
+              const visibleLikesCount = getTemplateLikesCount(
+                template,
+                likedTemplateIds,
+              )
 
-                <h2>{template.title}</h2>
-                <p>{template.description}</p>
+              return (
+                <article className="template-list-card" key={template.id}>
+                  <div className="template-list-card__top">
+                    <span>{template.sphere}</span>
+                    <span>{template.tool}</span>
+                    <span>{template.conversionType}</span>
+                  </div>
 
-                <div className="template-list-card__footer">
-                  <span>♥ {template.likes}</span>
+                  <h2>{template.title}</h2>
+                  <p>{template.description}</p>
 
-                  <Link className="button button--small" to={`/templates/${template.id}`}>
-                    Открыть карточку
-                  </Link>
-                </div>
-              </article>
-            ))}
+                  <div className="template-list-card__footer">
+                    <button
+                      className={`template-like-button ${
+                        templateIsLiked ? 'template-like-button--active' : ''
+                      }`}
+                      type="button"
+                      aria-pressed={templateIsLiked}
+                      onClick={() => handleToggleTemplateLike(template.id)}
+                    >
+                      ♥ {visibleLikesCount}
+                    </button>
+
+                    <Link className="button button--small" to={`/templates/${template.id}`}>
+                      Открыть карточку
+                    </Link>
+                  </div>
+                </article>
+              )
+            })}
           </div>
         )}
       </div>
@@ -383,6 +423,21 @@ export function TemplateDetailPage() {
   const { templateId } = useParams()
   const template = findTemplateById(demoTemplates, templateId)
   const [copyMessage, setCopyMessage] = useState('')
+  const [likedTemplateIds, setLikedTemplateIds] = useState(() =>
+    getLikedTemplateIdsFromStorage(),
+  )
+
+  const templateIsLiked = template
+    ? checkTemplateIsLiked(template.id, likedTemplateIds)
+    : false
+
+  const visibleLikesCount = template
+    ? getTemplateLikesCount(template, likedTemplateIds)
+    : 0
+
+  useEffect(() => {
+    saveLikedTemplateIdsToStorage(likedTemplateIds)
+  }, [likedTemplateIds])
 
   async function handleCopyPrompt() {
     if (!template) {
@@ -395,6 +450,16 @@ export function TemplateDetailPage() {
     } catch {
       setCopyMessage('Не удалось скопировать автоматически. Можно выделить текст вручную.')
     }
+  }
+
+  function handleToggleTemplateLike() {
+    if (!template) {
+      return
+    }
+
+    setLikedTemplateIds((currentLikedTemplateIds) =>
+      toggleTemplateLike(template.id, currentLikedTemplateIds),
+    )
   }
 
   if (!template) {
@@ -437,7 +502,26 @@ export function TemplateDetailPage() {
             <span>Сфера: {template.sphere}</span>
             <span>Инструмент: {template.tool}</span>
             <span>Тип: {template.conversionType}</span>
-            <span>Лайки: {template.likes}</span>
+            <span>Лайки: {visibleLikesCount}</span>
+          </div>
+
+          <div className="template-detail__rating">
+            <button
+              className={`template-like-button template-like-button--large ${
+                templateIsLiked ? 'template-like-button--active' : ''
+              }`}
+              type="button"
+              aria-pressed={templateIsLiked}
+              onClick={handleToggleTemplateLike}
+            >
+              {templateIsLiked
+                ? `♥ Уже оценено: ${visibleLikesCount}`
+                : `♡ Нравится: ${visibleLikesCount}`}
+            </button>
+
+            <p>
+              Оценка хранится локально в браузере. Повторное нажатие убирает лайк.
+            </p>
           </div>
 
           <div className="template-detail__prompt-block">

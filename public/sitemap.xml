@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>http://localhost:4173/</loc>
+  </url>
+  <url>
+    <loc>http://localhost:4173/templates</loc>
+  </url>
+  <url>
+    <loc>http://localhost:4173/editor</loc>
+  </url>
+  <url>
+    <loc>http://localhost:4173/research</loc>
+  </url>
+  <url>
+    <loc>http://localhost:4173/knowledge</loc>
+  </url>
+  <url>
+    <loc>http://localhost:4173/auth/login</loc>
+  </url>
+</urlset>
