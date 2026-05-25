@@ -18,6 +18,13 @@ import {
   saveLikedTemplateIdsToStorage,
   toggleTemplateLike,
 } from '../../utils/templateLikesStorage'
+import {
+  checkTemplateIsFavorite,
+  getFavoriteTemplateIdsFromStorage,
+  saveFavoriteTemplateIdsToStorage,
+  toggleTemplateFavorite,
+} from '../../utils/templateFavoritesStorage'
+import { copyTextToClipboard } from '../../utils/clipboard'
 import { PromptSyntaxPreview } from '../editor/PromptSyntaxPreview'
 
 const emptyTemplateFilters = {
@@ -56,7 +63,12 @@ function createSearchParamsFromForm(query, filters) {
   return params
 }
 
-export function TemplateCatalogPage() {
+export function TemplateCatalogPage({
+  title = 'Шаблоны',
+  label = 'Ящик шаблонов',
+  paperMark = 'GET SEARCH',
+  description = 'Готовые шаблоны промптов можно искать по названию, сфере применения, инструменту и типу задачи. Поиск сохраняется в адресной строке, поэтому к результатам легко вернуться позже.',
+}) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -73,8 +85,12 @@ export function TemplateCatalogPage() {
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false)
   const [isResultsLoading, setIsResultsLoading] = useState(false)
   const [searchError, setSearchError] = useState('')
+  const [copyMessageByTemplateId, setCopyMessageByTemplateId] = useState({})
   const [likedTemplateIds, setLikedTemplateIds] = useState(() =>
     getLikedTemplateIdsFromStorage(),
+  )
+  const [favoriteTemplateIds, setFavoriteTemplateIds] = useState(() =>
+    getFavoriteTemplateIdsFromStorage(),
   )
 
   const queryIsLongEnough = searchQuery.trim().length >= 3
@@ -86,6 +102,10 @@ export function TemplateCatalogPage() {
   useEffect(() => {
     saveLikedTemplateIdsToStorage(likedTemplateIds)
   }, [likedTemplateIds])
+
+  useEffect(() => {
+    saveFavoriteTemplateIdsToStorage(favoriteTemplateIds)
+  }, [favoriteTemplateIds])
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -137,19 +157,7 @@ export function TemplateCatalogPage() {
     const abortController = new AbortController()
 
     async function loadResults() {
-      const currentQuery = searchParams.get('q') || ''
-      const currentFilters = createFiltersFromSearchParams(searchParams)
-      const currentQueryIsReady = currentQuery.trim().length >= 3
-      const currentHasAnyFilter = Boolean(
-        currentFilters.sphere || currentFilters.tool || currentFilters.conversionType,
-      )
-
       setSearchError('')
-
-      if (!currentQueryIsReady && !currentHasAnyFilter) {
-        setFoundTemplates([])
-        return
-      }
 
       try {
         setIsResultsLoading(true)
@@ -194,9 +202,11 @@ export function TemplateCatalogPage() {
     event.preventDefault()
 
     const params = createSearchParamsFromForm(searchQuery, templateFilters)
+    const nextSearch = params.toString()
+    const currentPath = window.location.pathname
 
     setSearchParams(params)
-    navigate(`/templates?${params.toString()}`)
+    navigate(nextSearch ? `${currentPath}?${nextSearch}` : currentPath)
   }
 
   function handleResetFilters() {
@@ -206,7 +216,7 @@ export function TemplateCatalogPage() {
     setFoundTemplates([])
     setSearchError('')
     setSearchParams({})
-    navigate('/templates')
+    navigate(window.location.pathname)
   }
 
   function handleToggleTemplateLike(templateId) {
@@ -215,19 +225,35 @@ export function TemplateCatalogPage() {
     )
   }
 
+  function handleToggleTemplateFavorite(templateId) {
+    setFavoriteTemplateIds((currentFavoriteTemplateIds) =>
+      toggleTemplateFavorite(templateId, currentFavoriteTemplateIds),
+    )
+  }
+
+  async function handleCopyTemplatePrompt(template) {
+    try {
+      await copyTextToClipboard(template.prompt)
+      setCopyMessageByTemplateId({
+        [template.id]: 'Скопировано',
+      })
+    } catch {
+      setCopyMessageByTemplateId({
+        [template.id]: 'Не удалось скопировать',
+      })
+    }
+  }
+
   return (
     <section className="page-card">
       <div className="page-card__top">
-        <span className="page-card__label">Ящик шаблонов</span>
-        <span className="page-card__paper-mark">GET SEARCH</span>
+        <span className="page-card__label">{label}</span>
+        <span className="page-card__paper-mark">{paperMark}</span>
       </div>
 
       <div className="page-card__content">
-        <h1>Шаблоны</h1>
-        <p>
-          Готовые шаблоны промптов можно искать по названию, сфере применения, инструменту и типу задачи. 
-          Поиск сохраняется в адресной строке, поэтому к результатам легко вернуться позже.
-        </p>
+        <h1>{title}</h1>
+        <p>{description}</p>
       </div>
 
       <form
@@ -334,6 +360,10 @@ export function TemplateCatalogPage() {
                 template,
                 likedTemplateIds,
               )
+              const templateIsFavorite = checkTemplateIsFavorite(
+                template.id,
+                favoriteTemplateIds,
+              )
 
               return (
                 <article className="template-list-card" key={template.id}>
@@ -358,10 +388,37 @@ export function TemplateCatalogPage() {
                       ♥ {visibleLikesCount}
                     </button>
 
-                    <Link className="button button--small" to={`/templates/${template.id}`}>
-                      Открыть карточку
-                    </Link>
+                    <div className="template-list-card__actions">
+                      <button
+                        className={`template-favorite-button ${
+                          templateIsFavorite ? 'template-favorite-button--active' : ''
+                        }`}
+                        type="button"
+                        aria-pressed={templateIsFavorite}
+                        onClick={() => handleToggleTemplateFavorite(template.id)}
+                      >
+                        {templateIsFavorite ? '★ В избранном' : '☆ В избранное'}
+                      </button>
+
+                      <button
+                        className="button button--small"
+                        type="button"
+                        onClick={() => handleCopyTemplatePrompt(template)}
+                      >
+                        Скопировать
+                      </button>
+
+                      <Link className="button button--small" to={`/templates/${template.id}`}>
+                        Открыть карточку
+                      </Link>
+                    </div>
                   </div>
+
+                  {copyMessageByTemplateId[template.id] && (
+                    <p className="template-list-card__message">
+                      {copyMessageByTemplateId[template.id]}
+                    </p>
+                  )}
                 </article>
               )
             })}
@@ -398,8 +455,8 @@ function SearchStateMessage({
 
   if (!queryIsLongEnough && !hasAnyFilter) {
     return (
-      <div className="template-catalog__empty">
-        Введите поисковый запрос или выберите фильтр, чтобы увидеть результаты.
+      <div className="template-catalog__summary">
+        Показаны все публичные шаблоны. Используйте поиск или фильтры, чтобы сузить выдачу.
       </div>
     )
   }
@@ -426,6 +483,9 @@ export function TemplateDetailPage() {
   const [likedTemplateIds, setLikedTemplateIds] = useState(() =>
     getLikedTemplateIdsFromStorage(),
   )
+  const [favoriteTemplateIds, setFavoriteTemplateIds] = useState(() =>
+    getFavoriteTemplateIdsFromStorage(),
+  )
 
   const templateIsLiked = template
     ? checkTemplateIsLiked(template.id, likedTemplateIds)
@@ -434,10 +494,17 @@ export function TemplateDetailPage() {
   const visibleLikesCount = template
     ? getTemplateLikesCount(template, likedTemplateIds)
     : 0
+  const templateIsFavorite = template
+    ? checkTemplateIsFavorite(template.id, favoriteTemplateIds)
+    : false
 
   useEffect(() => {
     saveLikedTemplateIdsToStorage(likedTemplateIds)
   }, [likedTemplateIds])
+
+  useEffect(() => {
+    saveFavoriteTemplateIdsToStorage(favoriteTemplateIds)
+  }, [favoriteTemplateIds])
 
   async function handleCopyPrompt() {
     if (!template) {
@@ -445,7 +512,7 @@ export function TemplateDetailPage() {
     }
 
     try {
-      await navigator.clipboard.writeText(template.prompt)
+      await copyTextToClipboard(template.prompt)
       setCopyMessage('Промпт скопирован в буфер обмена.')
     } catch {
       setCopyMessage('Не удалось скопировать автоматически. Можно выделить текст вручную.')
@@ -459,6 +526,16 @@ export function TemplateDetailPage() {
 
     setLikedTemplateIds((currentLikedTemplateIds) =>
       toggleTemplateLike(template.id, currentLikedTemplateIds),
+    )
+  }
+
+  function handleToggleTemplateFavorite() {
+    if (!template) {
+      return
+    }
+
+    setFavoriteTemplateIds((currentFavoriteTemplateIds) =>
+      toggleTemplateFavorite(template.id, currentFavoriteTemplateIds),
     )
   }
 
@@ -519,8 +596,19 @@ export function TemplateDetailPage() {
                 : `♡ Нравится: ${visibleLikesCount}`}
             </button>
 
+            <button
+              className={`template-favorite-button template-favorite-button--large ${
+                templateIsFavorite ? 'template-favorite-button--active' : ''
+              }`}
+              type="button"
+              aria-pressed={templateIsFavorite}
+              onClick={handleToggleTemplateFavorite}
+            >
+              {templateIsFavorite ? '★ В избранном' : '☆ Добавить в избранное'}
+            </button>
+
             <p>
-              Оценка хранится локально в браузере. Повторное нажатие убирает лайк.
+              Оценка и избранное хранятся локально в браузере.
             </p>
           </div>
 
@@ -555,6 +643,116 @@ export function TemplateDetailPage() {
         </div>
 
         <PromptSyntaxPreview promptText={template.prompt} />
+      </div>
+    </section>
+  )
+}
+
+export function FavoriteTemplatesPage() {
+  const [favoriteTemplateIds, setFavoriteTemplateIds] = useState(() =>
+    getFavoriteTemplateIdsFromStorage(),
+  )
+  const [copyMessageByTemplateId, setCopyMessageByTemplateId] = useState({})
+
+  const favoriteTemplates = demoTemplates.filter((template) =>
+    checkTemplateIsFavorite(template.id, favoriteTemplateIds),
+  )
+
+  useEffect(() => {
+    saveFavoriteTemplateIdsToStorage(favoriteTemplateIds)
+  }, [favoriteTemplateIds])
+
+  function handleToggleTemplateFavorite(templateId) {
+    setFavoriteTemplateIds((currentFavoriteTemplateIds) =>
+      toggleTemplateFavorite(templateId, currentFavoriteTemplateIds),
+    )
+  }
+
+  async function handleCopyTemplatePrompt(template) {
+    try {
+      await copyTextToClipboard(template.prompt)
+      setCopyMessageByTemplateId({
+        [template.id]: 'Скопировано',
+      })
+    } catch {
+      setCopyMessageByTemplateId({
+        [template.id]: 'Не удалось скопировать',
+      })
+    }
+  }
+
+  return (
+    <section className="page-card">
+      <div className="page-card__top">
+        <span className="page-card__label">Избранный ящик</span>
+        <span className="page-card__paper-mark">FAVORITES</span>
+      </div>
+
+      <div className="page-card__content">
+        <h1>Избранное</h1>
+        <p>
+          Здесь собраны чужие промпты, которые вы отметили в публичном каталоге.
+        </p>
+      </div>
+
+      <div className="template-catalog">
+        {favoriteTemplates.length === 0 ? (
+          <div className="template-catalog__empty">
+            В избранном пока пусто. Откройте каталог и сохраните полезную карточку.
+          </div>
+        ) : (
+          <div className="template-card-list">
+            {favoriteTemplates.map((template) => (
+              <article className="template-list-card" key={template.id}>
+                <div className="template-list-card__top">
+                  <span>{template.sphere}</span>
+                  <span>{template.tool}</span>
+                  <span>{template.conversionType}</span>
+                </div>
+
+                <h2>{template.title}</h2>
+                <p>{template.description}</p>
+
+                <div className="template-list-card__footer">
+                  <button
+                    className="template-favorite-button template-favorite-button--active"
+                    type="button"
+                    aria-pressed="true"
+                    onClick={() => handleToggleTemplateFavorite(template.id)}
+                  >
+                    ★ Убрать
+                  </button>
+
+                  <div className="template-list-card__actions">
+                    <button
+                      className="button button--small"
+                      type="button"
+                      onClick={() => handleCopyTemplatePrompt(template)}
+                    >
+                      Скопировать
+                    </button>
+
+                    <Link className="button button--small" to={`/templates/${template.id}`}>
+                      Открыть карточку
+                    </Link>
+                  </div>
+                </div>
+
+                {copyMessageByTemplateId[template.id] && (
+                  <p className="template-list-card__message">
+                    {copyMessageByTemplateId[template.id]}
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="page-card__actions">
+        <Link className="button button--primary" to="/hub">
+          Открыть публичный каталог
+        </Link>
       </div>
     </section>
   )

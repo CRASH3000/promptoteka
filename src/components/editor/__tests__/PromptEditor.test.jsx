@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PromptEditor } from '../PromptEditor'
+
+let originalClipboard
 
 function PromptEditorTestWrapper() {
   const [promptValue, setPromptValue] = useState('')
@@ -21,6 +23,17 @@ function PromptEditorTestWrapper() {
 }
 
 describe('PromptEditor integration', () => {
+  beforeEach(() => {
+    originalClipboard = navigator.clipboard
+  })
+
+  afterEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: originalClipboard,
+    })
+  })
+
   it('позволяет пользователю вводить текст в textarea', async () => {
     const user = userEvent.setup()
 
@@ -90,5 +103,51 @@ describe('PromptEditor integration', () => {
 
     expect(screen.getByText('Введите текст промпта')).toBeInTheDocument()
     expect(screen.getByLabelText('Текст промпта')).toHaveAttribute('aria-invalid', 'true')
+  })
+
+  it('копирует заполненный промпт в буфер обмена', async () => {
+    const user = userEvent.setup()
+    const writeText = vi.fn().mockResolvedValue()
+
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+
+    render(<PromptEditorTestWrapper />)
+
+    const textarea = screen.getByLabelText('Текст промпта')
+
+    await user.type(textarea, '## Роль')
+    await user.click(screen.getByRole('button', { name: 'Скопировать промпт' }))
+
+    expect(writeText).toHaveBeenCalledWith('## Роль')
+    expect(screen.getByText('Промпт скопирован в буфер обмена.')).toBeInTheDocument()
+  })
+
+  it('показывает понятную ошибку, если буфер обмена недоступен', async () => {
+    const user = userEvent.setup()
+
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: undefined,
+    })
+
+    render(<PromptEditorTestWrapper />)
+
+    const textarea = screen.getByLabelText('Текст промпта')
+
+    await user.type(textarea, '## Роль')
+    await user.click(screen.getByRole('button', { name: 'Скопировать промпт' }))
+
+    expect(
+      screen.getByText('Буфер обмена недоступен. Можно выделить текст вручную.'),
+    ).toBeInTheDocument()
+  })
+
+  it('блокирует кнопку копирования, пока промпт пустой', () => {
+    render(<PromptEditorTestWrapper />)
+
+    expect(screen.getByRole('button', { name: 'Скопировать промпт' })).toBeDisabled()
   })
 })

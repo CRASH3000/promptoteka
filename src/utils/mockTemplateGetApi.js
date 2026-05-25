@@ -27,11 +27,6 @@ export async function getTemplatesBySearchParams(searchParams, signal) {
   }
 
   const queryIsReady = query.trim().length >= 3
-  const hasAnyFilter = Boolean(sphere || tool || conversionType)
-
-  if (!queryIsReady && !hasAnyFilter) {
-    return []
-  }
 
   return searchAndFilterTemplates(demoTemplates, queryIsReady ? query : '', filters)
 }

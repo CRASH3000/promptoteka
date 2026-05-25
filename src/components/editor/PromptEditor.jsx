@@ -1,5 +1,6 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { PromptSyntaxPreview } from './PromptSyntaxPreview'
+import { copyTextToClipboard } from '../../utils/clipboard'
 
 const promptEditorActions = [
   {
@@ -43,6 +44,7 @@ export function PromptEditor({
 }) {
   const textareaRef = useRef(null)
   const errorId = `${id}-error`
+  const [copyMessage, setCopyMessage] = useState('')
 
   function handleTextareaChange(event) {
     onChange(event.target.value)
@@ -74,6 +76,25 @@ export function PromptEditor({
     }, 0)
   }
 
+  async function handleCopyPrompt() {
+    if (!value.trim()) {
+      setCopyMessage('Сначала заполните текст промпта.')
+      return
+    }
+
+    try {
+      const copied = await copyTextToClipboard(value)
+
+      setCopyMessage(
+        copied
+          ? 'Промпт скопирован в буфер обмена.'
+          : 'Буфер обмена недоступен. Можно выделить текст вручную.',
+      )
+    } catch {
+      setCopyMessage('Не удалось скопировать автоматически. Можно выделить текст вручную.')
+    }
+  }
+
   return (
     <div className="prompt-editor">
       <div className="prompt-editor__top">
@@ -90,21 +111,34 @@ export function PromptEditor({
         <span className="prompt-editor__mark">PROMPT EDITOR</span>
       </div>
 
-      <div
-        className="prompt-editor__toolbar"
-        aria-label="Быстрые действия редактора промптов"
-      >
-        {promptEditorActions.map((action) => (
-          <button
-            key={action.label}
-            className="prompt-editor__toolbar-button"
-            type="button"
-            onClick={() => insertTextIntoPrompt(action.text)}
-          >
-            {action.label}
-          </button>
-        ))}
+      <div className="prompt-editor__tools">
+        <div
+          className="prompt-editor__toolbar"
+          aria-label="Быстрые действия редактора промптов"
+        >
+          {promptEditorActions.map((action) => (
+            <button
+              key={action.label}
+              className="prompt-editor__toolbar-button"
+              type="button"
+              onClick={() => insertTextIntoPrompt(action.text)}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          className="button button--small"
+          type="button"
+          disabled={!value.trim()}
+          onClick={handleCopyPrompt}
+        >
+          Скопировать промпт
+        </button>
       </div>
+
+      {copyMessage && <p className="prompt-editor__copy-message">{copyMessage}</p>}
 
       <div className="prompt-editor__workspace">
         <div className="prompt-editor__field">

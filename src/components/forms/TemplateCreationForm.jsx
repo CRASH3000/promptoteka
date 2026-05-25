@@ -51,9 +51,7 @@ export function TemplateCreationForm() {
       return
     }
 
-    setSuccessMessage(
-      'Шаблон сохранён локально. Редактор промптов подключён вместо обычного textarea.',
-    )
+    setSuccessMessage('Шаблон сохранён.')
   }
 
   function handleClearForm() {

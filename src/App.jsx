@@ -14,6 +14,7 @@ import {
   RegisterForm,
 } from './components/forms/AuthForms'
 import {
+  FavoriteTemplatesPage,
   TemplateCatalogPage,
   TemplateDetailPage,
 } from './components/templates/TemplateCatalog'
@@ -124,21 +125,11 @@ function App() {
               <Route
                 path="/hub"
                 element={
-                  <Page
+                  <TemplateCatalogPage
                     label="Публичный ящик"
                     title="Промпт-хаб"
-                    description="[В. РАЗРАБОТКЕ] Каталог промптов от пользователей с поиском идей, популярными шаблонами и сохранением полезных карточек в избранное."
-                    actions={[
-                      {
-                        to: '/templates',
-                        label: 'Открыть шаблоны',
-                        variant: 'primary',
-                      },
-                      {
-                        to: '/profile/templates/new',
-                        label: 'Создать шаблон',
-                      },
-                    ]}
+                    paperMark="PUBLIC"
+                    description="Публичный каталог промптов от пользователей: можно посмотреть список карточек, найти нужный промпт, открыть детальную страницу, скопировать текст и добавить карточку в избранное."
                   />
                 }
               />
@@ -256,24 +247,7 @@ function App() {
 
               <Route
                 path="/profile/favorites"
-                element={
-                  <Page
-                    label="Избранный ящик"
-                    title="Избранное"
-                    description="[В РАЗРАБОТКЕ] Шаблоны других пользователей, которые были добавлены в избранное."
-                    actions={[
-                      {
-                        to: '/templates',
-                        label: 'Найти шаблоны',
-                        variant: 'primary',
-                      },
-                      {
-                        to: '/profile',
-                        label: 'Назад в кабинет',
-                      },
-                    ]}
-                  />
-                }
+                element={<FavoriteTemplatesPage />}
               />
 
               <Route

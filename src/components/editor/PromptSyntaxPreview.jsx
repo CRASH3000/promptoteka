@@ -23,7 +23,14 @@ export function PromptSyntaxPreview({ promptText }) {
               key={line.id}
               className={`prompt-preview__line prompt-preview__line--${line.type}`}
             >
-              {line.text}
+              {line.tokens.map((token) => (
+                <span
+                  key={token.id}
+                  className={`prompt-preview__token prompt-preview__token--${token.type}`}
+                >
+                  {token.text}
+                </span>
+              ))}
             </code>
           ))}
         </pre>
